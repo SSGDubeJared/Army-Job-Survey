@@ -123,6 +123,41 @@
             line-height: 1.4;
         }
 
+        .component-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .component-card {
+            background-color: var(--bg-primary);
+            border: 2px solid var(--border-color);
+            padding: 20px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .component-card:hover {
+            border-color: var(--army-gold);
+            background-color: var(--bg-surface-hover);
+            box-shadow: 0 0 15px var(--hud-glow);
+        }
+
+        .component-card h3 {
+            color: var(--army-gold);
+            font-size: 1.1rem;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .component-card p {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            line-height: 1.4;
+        }
+
         .progress-container {
             width: 100%;
             height: 6px;
@@ -173,6 +208,17 @@
             box-shadow: 0 0 10px var(--hud-glow);
         }
 
+        .option-card.selected {
+            border-color: var(--army-gold) !important;
+            background-color: var(--bg-surface-hover) !important;
+            box-shadow: 0 0 15px var(--hud-glow) !important;
+        }
+        
+        .option-card.selected .option-text {
+            color: var(--text-primary) !important;
+            font-weight: bold;
+        }
+
         .option-index {
             color: var(--army-gold);
             font-weight: bold;
@@ -190,6 +236,16 @@
             color: var(--text-primary);
         }
 
+        .quiz-nav-frame {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 25px;
+            gap: 15px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 20px;
+        }
+
         .btn {
             background-color: transparent;
             border: 1px solid var(--army-gold);
@@ -204,13 +260,17 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 100%;
         }
 
         .btn:hover {
             background-color: var(--army-gold);
             color: var(--bg-primary);
             box-shadow: 0 0 15px var(--army-gold);
+        }
+
+        .btn-nav {
+            width: auto;
+            min-width: 130px;
         }
 
         .results-summary {
@@ -301,7 +361,7 @@
             padding-top: 20px;
         }
 
-        /* 📱 HARDCORE MOBILE LAYOUT OVERRIDES */
+        /* 📱 MOBILE LAYOUT OVERRIDES */
         @media (max-width: 600px) {
             body {
                 padding: 10px !important;
@@ -339,6 +399,16 @@
             .option-text {
                 font-size: 0.85rem !important;
             }
+
+            .quiz-nav-frame {
+                gap: 10px !important;
+            }
+
+            .btn-nav {
+                min-width: 110px !important;
+                font-size: 0.8rem !important;
+                padding: 10px 12px !important;
+            }
         }
     </style>
 </head>
@@ -347,39 +417,51 @@
     <div class="hud-container">
         <div class="hud-header">
             <div class="hud-title">
-                <span>[⚡]</span> ARMY_MOS_ALIGNMENT_SYS_v3.0
+                <span>[⚡]</span> ARMY_MOS_ALIGNMENT_SYS_v4.0
             </div>
             <div class="hud-status" id="hud-status-node">SYS_READY</div>
         </div>
 
-        <!-- 1. Welcome Screen -->
         <div id="screen-welcome" class="screen active">
             <p class="welcome-text">
-                Welcome to the Comprehensive Career Alignment Assessment. This upgraded 25-question matrix analyzes your natural problem-solving habits, daily preferences, and school interests to map your profile directly across the complete spectrum of U.S. Army technical and operational careers.
+                Welcome to the New Hampshire Career Alignment Portal. This 25-question matrix is calibrated specifically for Granite State students and recent graduates. It maps your regional preferences, problem-solving habits, and hands-on skills directly to career pipelines in the U.S. Army.
             </p>
             <div class="warning-box">
-                [NOTICE]: Every active Army MOS is accounted for in this assessment. Your patterns route directly into specialized fields including Combat, Cybersecurity, Aviation, Logistics, Healthcare, Support Operations, and Administration.
+                [CRITICAL INPUT REQUIRED]: Select your desired operational path. The matching engine will isolate and recommend paths strictly available within your chosen component.
             </div>
-            <button class="btn" onclick="startAssessment()">START QUIZ</button>
+            
+            <div class="component-grid">
+                <div class="component-card" onclick="selectComponent('active')">
+                    <h3>[A] ACTIVE DUTY // FULL-TIME</h3>
+                    <p>Train, live, and work full-time on regular Army installments globally. Accesses the complete structural career catalog including all primary Combat Arms, Tech, Logistics, and Medical branches.</p>
+                </div>
+                <div class="component-card" onclick="selectComponent('reserve')">
+                    <h3>[B] ARMY RESERVE // PART-TIME</h3>
+                    <p>Serve part-time close to home in New Hampshire (1 weekend a month, 2 weeks a year) while working a civilian job or attending college full-time. Focuses strictly on specialized support infrastructure (Tech, Intel, Logistics, Civil Affairs, and Healthcare).</p>
+                </div>
+            </div>
         </div>
 
-        <!-- 2. Quiz Assessment Screen -->
         <div id="screen-quiz" class="screen">
             <div class="progress-container">
                 <div id="quiz-progress" class="progress-bar"></div>
             </div>
             <div id="question-text-field" class="question-text">Loading parameters...</div>
             <div id="options-container" class="options-stack"></div>
+            
+            <div class="quiz-nav-frame">
+                <button id="btn-back" class="btn btn-nav" onclick="previousQuestion()">[🡐] BACK</button>
+                <button id="btn-next" class="btn btn-nav" onclick="nextQuestion()">NEXT [🡒]</button>
+            </div>
         </div>
 
-        <!-- 3. Results Screen -->
         <div id="screen-results" class="screen">
             <div class="results-summary">
-                <div class="mos-output-title" style="border-bottom: none; margin-bottom: 5px; font-size: 1.1rem;">Your Strengths Profile</div>
+                <div class="mos-output-title" id="results-component-title" style="border-bottom: none; margin-bottom: 5px; font-size: 1.1rem;">Your Strengths Profile</div>
                 <p class="welcome-text" style="margin-bottom: 20px; font-size: 0.85rem;">Your decisions show clear alignments within the following military occupational fields:</p>
                 
                 <div class="branch-score-row">
-                    <div class="branch-info"><span>Combat Arms & Field Ops (CA)</span><span id="score-CA-val">0%</span></div>
+                    <div class="branch-info"><span id="lbl-ca">Field Operations & Tactics (CA)</span><span id="score-CA-val">0%</span></div>
                     <div class="branch-bar-bg"><div id="bar-CA" class="branch-bar-fill"></div></div>
                 </div>
                 <div class="branch-score-row">
@@ -387,300 +469,343 @@
                     <div class="branch-bar-bg"><div id="bar-TI" class="branch-bar-fill"></div></div>
                 </div>
                 <div class="branch-score-row">
-                    <div class="branch-info"><span>Logistics, Mech & Aviation (LM)</span><span id="score-LM-val">0%</span></div>
+                    <div class="branch-info"><span>Logistics, Mechanical & Transport (LM)</span><span id="score-LM-val">0%</span></div>
                     <div class="branch-bar-bg"><div id="bar-LM" class="branch-bar-fill"></div></div>
                 </div>
                 <div class="branch-score-row">
-                    <div class="branch-info"><span>Admin, Healthcare & Support (AM)</span><span id="score-AM-val">0%</span></div>
+                    <div class="branch-info"><span>Administration, Law & Medicine (AM)</span><span id="score-AM-val">0%</span></div>
                     <div class="branch-bar-bg"><div id="bar-AM" class="branch-bar-fill"></div></div>
                 </div>
             </div>
 
             <div class="mos-output-box">
-                <div class="mos-output-title">Your Top Recommended Army Job Matches</div>
+                <div class="mos-output-title" id="mos-list-header">Your Top Recommended Army Job Matches</div>
                 <ul class="mos-list" id="mos-recommendation-list"></ul>
             </div>
 
             <div class="results-actions">
-                <button class="btn" onclick="retakeAssessment()">RETAKE ASSESSMENT</button>
+                <button class="btn" style="width: 100%;" onclick="retakeAssessment()">RETAKE ASSESSMENT</button>
             </div>
         </div>
     </div>
 
     <script>
+        // 25 Simplified, Localized, and Modernized New Hampshire High School Scenarios
         const matrix = [
             {
-                text: "1. A piece of gear, device, or equipment you need for a school project or part-time job suddenly breaks. What do you want to do first?",
+                text: "1. A piece of gear you rely on—like a snowmobile, a lawnmower at a summer job, or a 3D printer at school—suddenly breaks down. What do you want to do first?",
                 options: [
-                    { text: "Take it apart, look at the physical gears or wiring, and try to fix it myself.", cat: "LM" },
-                    { text: "Look up error codes online, run a digital check, or see if it's a software glitch.", cat: "TI" },
-                    { text: "Find a quick workaround or use a different tool so we can finish the job right now.", cat: "CA" },
-                    { text: "Check the warranty, find the receipt, or contact the manager to get an official replacement.", cat: "AM" }
+                    { text: "Grab some tools, inspect the mechanical links or small engine, and figure out how to fix it physically.", cat: "LM" },
+                    { text: "Plug it into a computer, look up the error code on Reddit, or see if it's a software glitch.", cat: "TI" },
+                    { text: "Find a creative workaround right away using whatever junk is nearby to finish the task.", cat: "CA" },
+                    { text: "Find the warranty manual, pull the invoice, or log a maintenance request with the team supervisor.", cat: "AM" }
                 ]
             },
             {
-                text: "2. When looking at future career fields or college majors, which environment sounds most exciting?",
+                text: "2. When looking at long-term careers, corporate jobs, or training programs, which environment keeps you energized?",
                 options: [
-                    { text: "Working outdoors in challenging terrain where I am constantly moving around.", cat: "CA" },
-                    { text: "A modern, high-tech computer lab or a clean corporate office handling data.", cat: "TI" },
-                    { text: "A busy workshop, garage, or warehouse floor where I'm building or fixing real things.", cat: "LM" },
-                    { text: "A hospital, local clinic, or human resources office working closely with people.", cat: "AM" }
+                    { text: "Working completely outdoors, dealing with changing weather, rough terrain, and high physical activity.", cat: "CA" },
+                    { text: "A secure, tech-focused server center, command room, or modern analytical desk workspace.", cat: "TI" },
+                    { text: "A busy workshop, industrial bay, garage, or hangar where I build, modify, or repair assets.", cat: "LM" },
+                    { text: "A professional office, medical clinic, courthouse, or human resources hub handling personnel.", cat: "AM" }
                 ]
             },
             {
-                text: "3. If you could instantly master one useful real-world skill, which would you pick?",
+                text: "3. If you could instantly master one useful real-world skill track, which would you pick?",
                 options: [
-                    { text: "Knowing exactly how to repair heavy vehicle engines, machinery, or complex mechanical systems.", cat: "LM" },
-                    { text: "Being able to scan large amounts of digital data and find hidden security threats.", cat: "TI" },
-                    { text: "The physical stamina and mental toughness to handle dangerous, fast-moving situations calmly.", cat: "CA" },
-                    { text: "Knowing how to quickly treat bad injuries, manage a medical crisis, or lead a team through a panic.", cat: "AM" }
+                    { text: "Advanced diesel mechanics, structural fabrication, or welding complex machines.", cat: "LM" },
+                    { text: "Analyzing network vulnerabilities, scanning servers, and shutting down digital bad actors.", cat: "TI" },
+                    { text: "The physical endurance, focus, and field skills to navigate intense, fast-moving environments safely.", cat: "CA" },
+                    { text: "Administering emergency trauma medicine, managing legal cases, or directing corporate financial records.", cat: "AM" }
                 ]
             },
             {
-                text: "4. Your class is planning a massive outdoor event, club trip, or sports competition. What job do you naturally grab?",
+                text: "4. Your high school class or community group is planning a massive outdoor event or bonfire night. What job do you take?",
                 options: [
-                    { text: "Setting up the Wi-Fi network, managing the digital sign-ups, and handling communications.", cat: "TI" },
-                    { text: "Mapping out the field layout, setting up physical boundaries, and organizing crowd security.", cat: "CA" },
-                    { text: "Coordinating the gear drops, managing truck deliveries, and tracking the food and supply inventory.", cat: "LM" },
-                    { text: "Setting up the first-aid tent, greeting people at check-in, and managing team schedules.", cat: "AM" }
+                    { text: "Configuring the main communications link, sound networks, and streaming data setups.", cat: "TI" },
+                    { text: "Scouting the terrain, setting physical boundary markers, and organizing the perimeter safety watchers.", cat: "CA" },
+                    { text: "Coordinating truck deliveries, managing heavy storage layouts, and tracking tool inventories.", cat: "LM" },
+                    { text: "Setting up the medical first-aid post, organizing check-in forms, and tracking total headcount.", cat: "AM" }
                 ]
             },
             {
-                text: "5. What is your primary goal for your career after high school or graduation? [PRIORITY DRIVER]",
+                text: "5. What is your primary objective for your career transition after high school or graduation? [PRIORITY DRIVER]",
                 options: [
-                    { text: "Landing a high-paying job in cybersecurity, software engineering, or tech intelligence.", cat: "TI" },
-                    { text: "Going into healthcare, nursing, law enforcement, or business management.", cat: "AM" },
-                    { text: "Building elite leadership habits, mental discipline, and extreme physical teamwork skills.", cat: "CA" },
-                    { text: "Starting a business in auto mechanics, building fabrication, aerospace tech, or global shipping.", cat: "LM" }
+                    { text: "Securing a top-tier corporate role in cybersecurity, cloud architecture, or data intelligence.", cat: "TI" },
+                    { text: "Entering advanced healthcare fields, emergency management, or professional legal operations.", cat: "AM" },
+                    { text: "Developing elite real-world leadership, tactical confidence, and high-impact physical team discipline.", cat: "CA" },
+                    { text: "Building a profitable business in heavy machinery, technical vehicle restoration, or global transport.", cat: "LM" }
                 ],
                 isTieBreaker: true
             },
             {
-                text: "6. You are handed a huge, complicated textbook or manual for a new class. How do you study it?",
+                text: "6. You are given a massive technical study guide or training blueprint for a difficult class. How do you approach it?",
                 options: [
-                    { text: "I skip to the pictures, blueprints, diagrams, and mechanical breakdowns.", cat: "LM" },
-                    { text: "I look for patterns, cross-reference statistics, and try to find the main hidden takeaway.", cat: "TI" },
-                    { text: "I skip the reading completely and just want to start practicing the steps hands-on.", cat: "CA" },
-                    { text: "I organize the information into neat folders, checklists, and guides to share with a study group.", cat: "AM" }
+                    { text: "I skip directly to the physical layouts, engine schematics, and mechanical system designs.", cat: "LM" },
+                    { text: "I scan the texts to find patterns, statistical trends, or hidden core takeaways.", cat: "TI" },
+                    { text: "I put the book away—I learn best by getting my hands on the equipment and executing on the floor.", cat: "CA" },
+                    { text: "I break the manual down into organized, color-coded study guides and step-by-step checklists for the group.", cat: "AM" }
                 ]
             },
             {
-                text: "7. Imagine a chaotic, loud, and fast-moving situation happens around you. How do you respond?",
+                text: "7. A severe New England blizzard knocks out power at a large event you are helping with. How do you react?",
                 options: [
-                    { text: "I rely on fast reflexes, physical energy, and jump into direct action immediately.", cat: "CA" },
-                    { text: "I slow down, look at the facts logically, and try to solve the puzzle behind the problem.", cat: "TI" },
-                    { text: "I focus on the tools around me—finding what gear or equipment we can use safely.", cat: "LM" },
-                    { text: "I stay calm, keep the people around me from panicking, and tell others exactly what to do.", cat: "AM" }
+                    { text: "I use pure physical stamina and quick actions to move resources, check boundaries, and secure vulnerable zones.", cat: "CA" },
+                    { text: "I start diagnosing the digital backups, check communication modules, or review the power logs logically.", cat: "TI" },
+                    { text: "I go straight to the generators, mechanical tools, and trucks to keep essential hardware running safely.", cat: "LM" },
+                    { text: "I check on people immediately, keep the crowd from panicking, and systematically organize an orderly evacuation plan.", cat: "AM" }
                 ]
             },
             {
-                text: "8. What kind of day makes you feel the most satisfied when you head home?",
+                text: "8. What kind of day makes you feel the most genuinely satisfied when you finish your shift?",
                 options: [
-                    { text: "A day of hard physical teamwork where my leadership directly protected my squad or won the challenge.", cat: "CA" },
-                    { text: "A day spent troubleshooting a broken engine or building a piece of hardware that now works perfectly.", cat: "LM" },
-                    { text: "A day spent cracking a tough code, solving a math puzzle, or analyzing complex information.", cat: "TI" },
-                    { text: "A day where my specific skills saved someone from a medical, legal, or personal crisis.", cat: "AM" }
+                    { text: "A grueling day of physical teamwork where my decisive choices directly pushed the team to complete a hard mission.", cat: "CA" },
+                    { text: "Successfully rebuilding a broken machine, tuning a custom engine, or fabricating a clean physical fix.", cat: "LM" },
+                    { text: "Solving an abstract technical puzzle, fixing an elusive software bug, or analyzing encrypted data streams.", cat: "TI" },
+                    { text: "Knowing my rapid intervention directly helped someone resolve a painful medical, administrative, or legal crisis.", cat: "AM" }
                 ]
             },
             {
-                text: "9. If your teachers, coaches, or best friends described your single best trait, what would they say?",
+                text: "9. If your high school coaches, teachers, or coworkers described your single best quality, what would they say?",
                 options: [
-                    { text: "You are incredibly reliable, tough, and never quit when things get physically hard.", cat: "CA" },
-                    { text: "You are a tech wizard who loves solving abstract puzzles or computer problems.", cat: "TI" },
-                    { text: "You are great with your hands, tools, and figuring out how physical things operate.", cat: "LM" },
-                    { text: "You have great empathy, are highly organized, and know how to take care of people.", cat: "AM" }
+                    { text: "You are incredibly reliable, mentally tough, and never back down when things get physically hard.", cat: "CA" },
+                    { text: "You are an analytical tech genius who easily solves complex software or logic puzzles.", cat: "TI" },
+                    { text: "You have a natural gift for working with your hands, building structures, and figuring out tools.", cat: "LM" },
+                    { text: "You are highly organized, empathetic, and possess an innate ability to lead and take care of people.", cat: "AM" }
                 ]
             },
             {
-                text: "10. You notice a major slowdown in how your team is getting an assignment or project done. How do you fix it? [PRIORITY DRIVER]",
+                text: "10. You notice a massive bottleneck that is completely stalling out a group assignment or work project. How do you solve it? [PRIORITY DRIVER]",
                 options: [
-                    { text: "Change the team layout, cut out unnecessary rules, and make sure people are in the right roles.", cat: "AM" },
-                    { text: "Check the materials—figure out what supplies or tools are missing and go grab them.", cat: "LM" },
-                    { text: "Rally the team to put in extra hours and use pure hard work to push past the obstacle.", cat: "CA" },
-                    { text: "Find a new digital app, software shortcut, or automated tracking system to speed things up.", cat: "TI" }
+                    { text: "Reorganize the layout, fix administrative steps, and put people in positions that match their talents.", cat: "AM" },
+                    { text: "Examine the resource chain—identify what physical tools or gear parts are missing and go find them.", cat: "LM" },
+                    { text: "Rally the team together to put in extra muscle and work right through the problem by force.", cat: "CA" },
+                    { text: "Build a digital script, shared tracker, or software configuration to automate and clear the bottleneck.", cat: "TI" }
                 ],
                 isTieBreaker: true
             },
             {
-                text: "11. If you had to pick one type of gear to master completely, which sounds coolest?",
+                text: "11. If you had to pick one class of highly specialized equipment to master completely, which sounds best?",
                 options: [
-                    { text: "Tactical vehicles, specialized weapons platforms, or high-tech navigation gear.", cat: "CA" },
-                    { text: "Advanced network servers, encrypted databases, or powerful cybersecurity software.", cat: "TI" },
-                    { text: "Heavy diesel engines, aircraft parts, or massive hydraulic system equipment.", cat: "LM" },
-                    { text: "Advanced medical diagnostic tools, legal files, or personnel tracking databases.", cat: "AM" }
+                    { text: "Tactical transport platforms, remote navigation gear, or high-power field systems.", cat: "CA" },
+                    { text: "Secure mainframe systems, deep network configurations, or digital analysis suites.", cat: "TI" },
+                    { text: "Heavy utility engines, aircraft turbine components, or advanced hydraulics.", cat: "LM" },
+                    { text: "Advanced medical trauma equipment, legal database mainframes, or personnel accounting suites.", cat: "AM" }
                 ]
             },
             {
-                text: "12. Your supervisor hands you a complex task but gives you absolutely zero instructions on how to do it. What do you do?",
+                text: "12. Your manager or teacher hands you a complex, high-priority project but gives you zero instructions. What do you do?",
                 options: [
-                    { text: "Scout out the workspace, grab a couple of teammates, and start testing options physically on the ground.", cat: "CA" },
-                    { text: "Build a checklist, organize everyone's roles, and plan out the steps before anyone moves.", cat: "AM" },
-                    { text: "Look at what tools, materials, and mechanical assets are available to work with first.", cat: "LM" },
-                    { text: "Research what people did in the past, search for online templates, and dig up data records.", cat: "TI" }
+                    { text: "Scout the environment, pick a small group of dependable people, and start testing practical fixes immediately.", cat: "CA" },
+                    { text: "Draft a clean workflow tracker, organize team roles, and build a checklist before moving an inch.", cat: "AM" },
+                    { text: "Inventory the available physical tools, tools, and heavy assets to see what can be built.", cat: "LM" },
+                    { text: "Research records online, find templates from similar past projects, and analyze data indicators.", cat: "TI" }
                 ]
             },
             {
-                text: "13. What do you look forward to doing most on your days off or during the weekend?",
+                text: "13. What is your favorite way to spend a free Saturday or weekend in New Hampshire?",
                 options: [
-                    { text: "Going hiking, camping, playing paintball, or playing high-energy team sports outside.", cat: "CA" },
-                    { text: "PC gaming, coding, building computers, or playing complex strategy games.", cat: "TI" },
-                    { text: "Working on a car or bike, building furniture, or tinkering with broken gadgets.", cat: "LM" },
-                    { text: "Volunteering, helping friends organize an event, or practicing life-saving/first-aid skills.", cat: "AM" }
+                    { text: "Hiking the White Mountains, skiing, hunting, snowboarding, or playing competitive outdoor sports.", cat: "CA" },
+                    { text: "PC gaming, coding personal apps, building computer setups, or playing deep strategy games.", cat: "TI" },
+                    { text: "Tinkering in the garage, upgrading a vehicle or dirtbike, or building physical projects with tools.", cat: "LM" },
+                    { text: "Volunteering for a local group, practicing first-aid techniques, or leading a community event.", cat: "AM" }
                 ]
             },
             {
-                text: "14. In a multi-player video game or a competitive team sport, what is your preferred role?",
+                text: "14. In multi-player gaming, recreational sports, or team activities, what role do you instinctively prefer?",
                 options: [
-                    { text: "The front-line attacker—leading the charge, making aggressive plays, and dealing with threats head-on.", cat: "CA" },
-                    { text: "The tech/intel support—watching the map, tracking enemy stats, and hacking or scouting ahead.", cat: "TI" },
-                    { text: "The engineer or base builder—gathering resources, upgrading gear, and repairing vehicles/structures.", cat: "LM" },
-                    { text: "The healer or team captain—keeping people alive, boosting squad morale, and calling out the strategy.", cat: "AM" }
+                    { text: "The front-line attacker—leading the charge, making fast plays, and taking head-on challenges.", cat: "CA" },
+                    { text: "The data analyst/scout—watching map tracking grids, hacking systems, and calculating enemy statistics.", cat: "TI" },
+                    { text: "The base engineer—managing core logistics, gathering gear assets, and repairing structures or vehicles.", cat: "LM" },
+                    { text: "The squad medic or shot-caller—keeping the team alive, monitoring resources, and directing unit strategy.", cat: "AM" }
                 ]
             },
             {
-                text: "15. What kind of achievement makes you feel the most genuinely proud of yourself? [PRIORITY DRIVER]",
+                text: "15. What type of individual success makes you feel the most genuinely proud of yourself? [PRIORITY DRIVER]",
                 options: [
-                    { text: "Pushing past my physical limits to win a tough tournament or finish a brutal workout.", cat: "CA" },
-                    { text: "Discovering a clever trick or finding a hidden bug that solves a massive technical problem.", cat: "TI" },
-                    { text: "Taking something that was completely broken and getting it running like new with my own hands.", cat: "LM" },
-                    { text: "Helping two friends resolve a major fight, or helping someone through a painful time.", cat: "AM" }
+                    { text: "Pushing past exhaustion to win a grueling athletic event or finish a demanding physical test.", cat: "CA" },
+                    { text: "Discovering a subtle security bug or logic fix that completely saves a software network from crashing.", cat: "TI" },
+                    { text: "Taking a completely dead engine, vehicle, or mechanical device and getting it running like new.", cat: "LM" },
+                    { text: "Stepping into a tense personal argument or crisis and successfully creating order or healing someone.", cat: "AM" }
                 ],
                 isTieBreaker: true
             },
             {
-                text: "16. You are working a part-time fast-food job during a massive dinner rush. Where do you want to stand?",
+                text: "16. You are working a hectic part-time shift at a busy local restaurant during peak hours. Where do you want to stand?",
                 options: [
-                    { text: "Right at the main grill or prep line, moving fast under intense heat and pressure.", cat: "CA" },
-                    { text: "Managing the digital drive-thru screen or cash system to keep order entry perfectly optimized.", cat: "TI" },
-                    { text: "In the back room tracking inventory, restocking supplies, and fixing the ice machine if it jams.", cat: "LM" },
-                    { text: "At the front counter talking to customers, fixing order mistakes, and organizing team breaks.", cat: "AM" }
+                    { text: "Right on the main line under high heat, slinging orders as fast as possible under direct pressure.", cat: "CA" },
+                    { text: "Managing the digital order inputs, ticket trackers, and POS registers to keep workflow optimal.", cat: "TI" },
+                    { text: "In the back bay monitoring storage limits, organizing raw supplies, and servicing broken appliances.", cat: "LM" },
+                    { text: "At the front counter managing custom requests, treating minor team cuts, or directing floor staff.", cat: "AM" }
                 ]
             },
             {
-                text: "17. Which high school elective class did you find the most interesting or rewarding?",
+                text: "17. Which elective or high school department did you enjoy the most?",
                 options: [
-                    { text: "Physical Education (PE), weight training, or outdoor sports.", cat: "CA" },
-                    { text: "Computer science, coding, statistics, or advanced math.", cat: "TI" },
-                    { text: "Auto shop, woodworking, welding, or robotics fabrication.", cat: "LM" },
-                    { text: "Health science, psychology, anatomy, or student council.", cat: "AM" }
+                    { text: "Physical Education, weight training, or outdoor athletic coaching.", cat: "CA" },
+                    { text: "Computer programming, data analysis, robotics coding, or advanced mathematics.", cat: "TI" },
+                    { text: "Automotive repair, carpentry, welding shop, or structural fabrication.", cat: "LM" },
+                    { text: "Health sciences, psychology, public management, or student government.", cat: "AM" }
                 ]
             },
             {
-                text: "18. A package you ordered arrives with 50 different parts and a terrible instruction manual. How do you build it?",
+                text: "18. A massive shipment of furniture or equipment arrives at your job with 100 loose parts and a terrible guide. How do you build it?",
                 options: [
-                    { text: "I ditch the manual and figure it out as I go by matching the physical pieces together.", cat: "CA" },
-                    { text: "I look up a video tutorial on YouTube, figure out why the manual is bad, and find shortcuts.", cat: "TI" },
-                    { text: "I lay out all the bolts, screws, and tools neatly by size before doing anything else.", cat: "LM" },
-                    { text: "I check the safety warnings, make a clean workspace, and ask a friend to help me build it.", cat: "AM" }
+                    { text: "I set the manual down and figure it out as I go by matching components together physically.", cat: "CA" },
+                    { text: "I search for a digital fix online, scan video forums, and see where the instructions are wrong.", cat: "TI" },
+                    { text: "I organize every nut, bolt, and tool into neat grids by size before touching the equipment.", cat: "LM" },
+                    { text: "I read all safety parameters, double-check the packing manifest, and assign specific assembly roles.", cat: "AM" }
                 ]
             },
             {
-                text: "19. When playing an open-world RPG or strategy game, what is your go-to character style?",
+                text: "19. When playing an open-world sandbox or tactical strategy game, what is your go-to build?",
                 options: [
-                    { text: "A heavy warrior or fighter who deals with obstacles directly in close combat.", cat: "CA" },
-                    { text: "A tactical rogue, sniper, or mage who uses long-distance info and stealth to win.", cat: "TI" },
-                    { text: "A crafter or mechanic who upgrades gear, modifies weapons, and builds outposts.", cat: "LM" },
-                    { text: "A medic or squad support character who heals injuries and keeps the team operating.", cat: "AM" }
+                    { text: "A front-line fighter utilizing heavy gear, high speed, and direct close-quarters action.", cat: "CA" },
+                    { text: "A specialized tech expert using drones, remote information networks, and stealth options to outsmart targets.", cat: "TI" },
+                    { text: "A base builder who gathers resources, upgrades weapon systems, and maintains vehicle fleets.", cat: "LM" },
+                    { text: "A medic or squad support officer who handles healing, resource distribution, and operational coordination.", cat: "AM" }
                 ]
             },
             {
-                text: "20. You witness a minor fender-bender car accident on your neighborhood street. What do you do first?",
+                text: "20. You witness a minor car accident on a local street. What is your immediate reaction?",
                 options: [
-                    { text: "Run out immediately to direct traffic around the cars and pull broken parts off the road.", cat: "CA" },
-                    { text: "Pull out my phone to precisely log the time, location, and note exactly what happened.", cat: "TI" },
-                    { text: "Grab a toolkit or safety kit from my trunk to see if the vehicles have fluid leaks or smoke.", cat: "LM" },
-                    { text: "Run to check the drivers for injuries, keep them calm, and call 911 clearly.", cat: "AM" }
+                    { text: "Sprint out to clear debris off the asphalt, stop traffic, and secure the physical scene safely.", cat: "CA" },
+                    { text: "Pull up my phone to precisely track the time, note details, and analyze how the crash happened.", cat: "TI" },
+                    { text: "Grab a mechanical tool or fire kit from my truck to check for fuel leaks, smoke, or line failures.", cat: "LM" },
+                    { text: "Check drivers immediately for trauma injuries, keep passengers calm, and call 911 clearly.", cat: "AM" }
                 ]
             },
             {
-                text: "21. You are running a budget for a school club or planning how to save up for a car. What's your style?",
+                text: "21. You are managing the money and expenses for a school club or tracking your savings for a car. What is your method?",
                 options: [
-                    { text: "I love using spreadsheets, checking bank calculations, and tracking exactly where every cent goes.", cat: "AM" },
-                    { text: "I focus on getting things done with pure bargaining, trading gear, or using hard work instead of cash.", cat: "CA" },
-                    { text: "I look for digital coupon codes, banking apps, or smart automation to maximize my savings.", cat: "TI" },
-                    { text: "I plan exactly how much gas, parts, and transport costs will affect the total trip setup.", cat: "LM" }
+                    { text: "I love building clean spreadsheets, checking bank totals, and auditing where every dollar moves.", cat: "AM" },
+                    { text: "I barter, trade gear, and use hard physical work instead of spending real cash.", cat: "CA" },
+                    { text: "I search for code scripts, web extensions, or automatic apps to maximize interest and efficiency.", cat: "TI" },
+                    { text: "I map out fuel metrics, wear-and-tear costs, and parts numbers to calculate the true cost of operations.", cat: "LM" }
                 ]
             },
             {
-                text: "22. If you were picked to run a school media page or write an article about a major game, what would you focus on?",
+                text: "22. You are picked to run a school media profile or write an online piece about a big game. What do you cover?",
                 options: [
-                    { text: "Conducting interviews with the crowd, taking high-impact photos, and publishing clean media stories.", cat: "AM" },
-                    { text: "Analyzing complex team stats, reviewing video recordings, and identifying hidden strategic plays.", cat: "TI" },
-                    { text: "Reviewing the safety layouts, crowd management setups, or stadium perimeter security rules.", cat: "CA" },
-                    { text: "Reporting on the arena gear setups, equipment transportation, or specialized maintenance routines.", cat: "LM" }
+                    { text: "Interviewing players under pressure, capturing action photos, and writing highly engaging stories.", cat: "AM" },
+                    { text: "Breaking down intricate player data, studying film files, and exposing hidden tactical weaknesses.", cat: "TI" },
+                    { text: "Evaluating field layouts, crowd control safety, or stadium perimeter security gates.", cat: "CA" },
+                    { text: "Reviewing the equipment logistics, player transport networks, or complex turf maintenance systems.", cat: "LM" }
                 ]
             },
             {
-                text: "23. When working on a physical hands-on task, which type of tool do you prefer to handle?",
+                text: "23. When doing an intense project, which category of gear do you prefer to handle?",
                 options: [
-                    { text: "Heavy power tools, diesel engine lifts, welding rigs, or cargo loading systems.", cat: "LM" },
-                    { text: "Precision digital diagnostic systems, network cable testers, or cryptographic software.", cat: "TI" },
-                    { text: "Emergency trauma kits, splints, legal database terminals, or personnel logging software.", cat: "AM" },
-                    { text: "High-power field gear, multi-tools, communications headsets, or navigation hardware.", cat: "CA" }
+                    { text: "Heavy utility systems, industrial machinery, engine diagnostics, or transport vehicles.", cat: "LM" },
+                    { text: "High-end network interfaces, server testing rigs, or cryptographic tracking software.", cat: "TI" },
+                    { text: "Trauma kits, patient databases, legal case files, or personnel management networks.", cat: "AM" },
+                    { text: "Rugged communications gear, multi-tools, nav grids, or specialized tactical hardware.", cat: "CA" }
                 ]
             },
             {
-                text: "24. Your team is falling behind in a competitive tournament or deadline. What is your leadership approach?",
+                text: "24. Your team is losing a competition or falling behind a major deadline. How do you lead them?",
                 options: [
-                    { text: "Call an immediate huddle, yell out a clean motivation talk, and lead a high-energy charge forward.", cat: "CA" },
-                    { text: "Redistribute roles instantly based on stress levels, check for injuries or exhaustion, and keep rules tight.", cat: "AM" },
-                    { text: "Quickly analyze the opponent's strategy pattern, find a tactical weakness, and adapt our layout.", cat: "TI" },
-                    { text: "Check our operational assets—ensure our equipment is functioning perfectly and streamline the workflow.", cat: "LM" }
+                    { text: "Call an intense huddle, give a direct motivational talk, and lead an aggressive push forward.", cat: "CA" },
+                    { text: "Check on everyone's stress levels, inspect for physical injuries or exhaustion, and keep rules clear.", cat: "AM" },
+                    { text: "Quickly dissect the opponent's strategy pattern, find a critical flaw, and change our alignment.", cat: "TI" },
+                    { text: "Analyze our physical assets—verify that our tools are optimized and clear mechanical bottlenecks.", cat: "LM" }
                 ]
             },
             {
-                text: "25. Which of these professional career paths sounds the most rewarding for your long-term future? [PRIORITY DRIVER]",
+                text: "25. Which long-term industry sector sounds most rewarding for your life goals? [PRIORITY DRIVER]",
                 options: [
-                    { text: "Protecting lives directly in public safety, high-stakes defense, or specialized security ops.", cat: "CA" },
-                    { text: "Engineering complex aerospace platforms, heavy mechanical logistics, or technical manufacturing.", cat: "LM" },
-                    { text: "Mastering advanced cybersecurity frameworks, high-level data networks, or intelligence processing.", cat: "TI" },
-                    { text: "Serving a community in advanced trauma medicine, corporate legal defense, or finance management.", cat: "AM" }
+                    { text: "Direct public safety, professional tactical security, high-stakes defense, or rescue operations.", cat: "CA" },
+                    { text: "Aerospace engineering, precision heavy manufacturing, or advanced transport logistics.", cat: "LM" },
+                    { text: "Corporate cybersecurity architecture, signal network infrastructure, or intelligence analytics.", cat: "TI" },
+                    { text: "Advanced emergency medicine, unit leadership, corporate legal operations, or finance management.", cat: "AM" }
                 ],
                 isTieBreaker: true
             }
         ];
 
-        const mosMapping = {
+        // 🌟 ALL ACTIVE DUTY EXAMPLES (Includes High-Density Combat Arms)
+        const mosMappingActive = {
             "CA": [
-                { code: "11B", title: "Infantryman", desc: "The foundational ground force; conducts direct tactical maneuvers, security missions, and front-line combat operations." },
-                { code: "12B", title: "Combat Engineer", desc: "Constructs defensive positions, deploys demolition systems, and clears physical obstacles under high-stakes conditions." },
-                { code: "13F", title: "Fire Support Specialist", desc: "Coordinates intelligence and field data to plan, track, and execute precise long-range artillery and strike operations." },
-                { code: "19K", title: "M1 Armor Crewman", desc: "Operates and commands heavy armor assets and precision mobile weapons platforms like the M1 Abrams tank." }
+                { code: "11B", title: "Infantryman", desc: "The foundation of land combat forces; executes tactical maneuvers, assault operations, and front-line security." },
+                { code: "19K", title: "M1 Armor Crewman", desc: "Commands, drives, and operates heavy armor assets and mobile firepower platforms like the M1 Abrams tank." },
+                { code: "13F", title: "Fire Support Specialist", desc: "Coordinates intelligence and field data to observe, map, and execute long-range field artillery strikes." },
+                { code: "12B", title: "Combat Engineer", desc: "Constructs defensive layouts, deploys demolition arrays, and clears battlefield physical obstacles under pressure." }
             ],
             "TI": [
-                { code: "17C", title: "Cyber Operations Specialist", desc: "Defends critical defense information networks and executes advanced cryptographic, cyber defensive, and intelligence maneuvers." },
-                { code: "35F", title: "Intelligence Analyst", desc: "Evaluates raw satellite, radar, and signal data streams to build comprehensive strategic enemy maps and operational briefs." },
-                { code: "25B", title: "Information Technology Specialist", desc: "Builds, configures, and safeguards tactical server infrastructures, field communication networks, and tactical computing arrays." },
-                { code: "35N", title: "Signals Intelligence Analyst", desc: "Intercepts and decodes foreign electronic communications data to extract actionable tactical warning profiles." }
+                { code: "17C", title: "Cyber Operations Specialist", desc: "Defends critical intelligence networks and conducts advanced defensive and offensive digital operations." },
+                { code: "35F", title: "Intelligence Analyst", desc: "Evaluates raw data streams, map grids, and imagery to construct predictive briefs on enemy movements." },
+                { code: "25B", title: "Information Technology Specialist", desc: "Builds, configures, and safeguards server architectures, data mainframes, and military computing systems." },
+                { code: "35N", title: "Signals Intelligence Analyst", desc: "Intercepts and decodes complex foreign communications data to extract tactical warning profiles." }
             ],
             "LM": [
-                { code: "91B", title: "Wheeled Vehicle Mechanic", desc: "Diagnoses, services, and completely overhauls engine, electrical, and fuel components on heavy tactical transport systems." },
-                { code: "15T", title: "UH-60 Helicopter Repairer", desc: "Maintains critical structure airframes, blades, subsystems, and specialized propulsion mechanics on Black Hawk systems." },
-                { code: "88M", title: "Motor Transport Operator", desc: "Commands heavy cargo transport platforms, organizing strategic multi-vehicle supply lines across diverse terrains." },
-                { code: "92Y", title: "Unit Supply Specialist", desc: "Manages logistical distribution channels, warehouse inventory arrays, and coordinates weapon and asset asset deliveries." }
+                { code: "91B", title: "Wheeled Vehicle Mechanic", desc: "Diagnoses, services, and completely overhauls engine, power, and electrical systems on tactical machinery." },
+                { code: "15T", title: "UH-60 Helicopter Repairer", desc: "Performs critical structural inspections, blade configurations, and turbine repairs on the Black Hawk aviation platform." },
+                { code: "88M", title: "Motor Transport Operator", desc: "Commands heavy tactical cargo transport vehicles, coordinating massive multi-vehicle supply runs over rough terrain." },
+                { code: "92Y", title: "Unit Supply Specialist", desc: "Directs logistical distribution channels, warehouse inventory arrays, and manages unit equipment tracking." }
             ],
             "AM": [
-                { code: "68W", title: "Combat Medic Specialist", desc: "Provides vital trauma care, emergency medical interventions, and healthcare support within field environments." },
-                { code: "31B", title: "Military Police", desc: "Enforces military law, carries out anti-terrorism security patrols, manages area policing, and executes tactical traffic control." },
-                { code: "42A", title: "Human Resources Specialist", desc: "Directs vital personnel administrative tracking databases, monitors operational data, and schedules service profiles." },
-                { code: "27D", title: "Paralegal Specialist", desc: "Drafts crucial legal documentation, manages court records, and supports unit legal proceedings and military justice." }
+                { code: "68W", title: "Combat Medic Specialist", desc: "Delivers immediate emergency trauma medicine, tactical life-support care, and general base clinical treatment." },
+                { code: "31B", title: "Military Police", desc: "Enforces military law, coordinates anti-terrorism security patrols, and manages area policing and crime prevention." },
+                { code: "42A", title: "Human Resources Specialist", desc: "Manages unit administrative networks, tracks tracking databases, and coordinates career service profiles." },
+                { code: "27D", title: "Paralegal Specialist", desc: "Drafts crucial legal documentation, maps evidence files, and provides administrative support in military justice proceedings." }
             ]
         };
 
+        // 🌟 ALL ARMY RESERVE EXAMPLES (No Active Infantry/Armor/Artillery - Swapped for High-Demand Reserve Field Units)
+        const mosMappingReserve = {
+            "CA": [
+                { code: "12B", title: "Combat Engineer (Reserve Component)", desc: "Deploys with Reserve Engineer units to construct physical defenses, handle demolition arrays, and clear route obstacles." },
+                { code: "31B", title: "Military Police (Reserve Component)", desc: "Enforces law, runs base security networks, conducts traffic control, and provides local unit protection close to home." },
+                { code: "12N", title: "Horizontal Construction Engineer", desc: "Operates heavy earth-moving hardware like bulldozers, scrapers, and graders to clear tactical airstrips and combat routes." },
+                { code: "74D", title: "CBRN Specialist", desc: "Manages defense operations against chemical, biological, radiological, and nuclear threats, running decontamination sites." }
+            ],
+            "TI": [
+                { code: "17C", title: "Cyber Operations Specialist (Reserve)", desc: "Protects critical systems and handles cryptographic digital defense while remaining at a local New England cyber node." },
+                { code: "35F", title: "Intelligence Analyst (Reserve)", desc: "Processes field data arrays and compiles risk management maps for regional command structures during drill cycles." },
+                { code: "25B", title: "Information Technology Specialist", desc: "Manages server routing, local network security arrays, and data terminals for regional Reserve installations." },
+                { code: "25U", title: "Signal Support Systems Specialist", desc: "Configures and repairs battlefield radio systems, satellite communications links, and tactical electronic hardware." }
+            ],
+            "LM": [
+                { code: "91B", title: "Wheeled Vehicle Mechanic (Reserve)", desc: "Maintains and completely overhauls engine, hydraulic, and fuel arrays on transport machinery during regional training cycles." },
+                { code: "88M", title: "Motor Transport Operator (Reserve)", desc: "Manages heavy cargo fleets, shipping vital materials and equipment over regional logistics routes." },
+                { code: "92Y", title: "Unit Supply Specialist", desc: "Coordinates local unit gear supply manifests, armory tracking records, and handles equipment storage audits." },
+                { code: "92F", title: "Petroleum Supply Specialist", desc: "Manages bulk fuel distribution networks, tests fuel purity, and runs heavy fuel transport vehicles for field training ops." }
+            ],
+            "AM": [
+                { code: "68W", title: "Combat Medic Specialist (Reserve)", desc: "Maintains critical trauma and healthcare certifications to staff local medical units and field aid support locations." },
+                { code: "42A", title: "Human Resources Specialist", desc: "Directs vital administrative records pipelines, managing pay, tracking readiness data, and scheduling training files." },
+                { code: "27D", title: "Paralegal Specialist", desc: "Manages corporate and military legal defense files, supporting processing teams for regional Reserve commands." },
+                { code: "36B", title: "Financial Management Technician", desc: "Audits fiscal data arrays, manages military budget sheets, and directs legal currency processing operations for personnel." }
+            ]
+        };
+
+        // Application State Engine
+        let selectedComponent = null;
         let currentIndex = 0;
-        let scores = { CA: 0, TI: 0, LM: 0, AM: 0 };
+        let userAnswers = [];
+
+        function selectComponent(component) {
+            selectedComponent = component;
+            userAnswers = Array(matrix.length).fill(null);
+            currentIndex = 0;
+            
+            // Adjust visual label text for field operations based on component selected
+            if (selectedComponent === 'reserve') {
+                document.getElementById('lbl-ca').innerText = "Tactical Field Operations (CA)";
+                document.getElementById('mos-list-header').innerText = "Top Recommended Army Reserve Job Matches";
+            } else {
+                document.getElementById('lbl-ca').innerText = "Combat Arms & Field Ops (CA)";
+                document.getElementById('mos-list-header').innerText = "Your Top Recommended Active Army Job Matches";
+            }
+
+            setScreen('quiz', 'SYS_EVALUATING');
+            loadQuestion();
+        }
 
         function setScreen(screenId, statusText) {
             document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.getElementById(`screen-${screenId}`).classList.add('active');
             document.getElementById('hud-status-node').innerText = statusText;
-        }
-
-        function startAssessment() {
-            currentIndex = 0;
-            scores = { CA: 0, TI: 0, LM: 0, AM: 0 };
-            setScreen('quiz', 'SYS_EVALUATING');
-            loadQuestion();
         }
 
         function loadQuestion() {
@@ -690,6 +815,10 @@
             const currentQ = matrix[currentIndex];
             document.getElementById('question-text-field').innerText = currentQ.text;
 
+            // Manage visible state of navigation triggers
+            document.getElementById('btn-back').style.visibility = 'visible'; // Back can now return to home or prior question
+            document.getElementById('btn-next').style.visibility = userAnswers[currentIndex] !== null ? 'visible' : 'hidden';
+
             const container = document.getElementById('options-container');
             container.innerHTML = '';
 
@@ -697,8 +826,13 @@
                 const prefix = String.fromCharCode(65 + index);
                 const card = document.createElement('button');
                 card.className = 'option-card';
-                card.onclick = () => selectOption(opt.cat, currentQ.isTieBreaker);
+                
+                // Read historic snapshot to restore persistence highlighting 
+                if (userAnswers[currentIndex] !== null && userAnswers[currentIndex].optionIndex === index) {
+                    card.classList.add('selected');
+                }
 
+                card.onclick = () => selectOption(opt.cat, currentQ.isTieBreaker, index);
                 card.innerHTML = `
                     <span class="option-index">[${prefix}]</span>
                     <span class="option-text">${opt.text}</span>
@@ -707,9 +841,8 @@
             });
         }
 
-        function selectOption(category, isTieBreaker) {
-            const weight = isTieBreaker ? 2 : 1;
-            scores[category] += weight;
+        function selectOption(category, isTieBreaker, optionIndex) {
+            userAnswers[currentIndex] = { cat: category, isTieBreaker: isTieBreaker, optionIndex: optionIndex };
 
             currentIndex++;
             if (currentIndex < matrix.length) {
@@ -719,9 +852,44 @@
             }
         }
 
+        function previousQuestion() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                loadQuestion();
+            } else {
+                // If on question 0, go back to component welcome page completely
+                selectedComponent = null;
+                setScreen('welcome', 'SYS_READY');
+            }
+        }
+
+        function nextQuestion() {
+            if (userAnswers[currentIndex] !== null) {
+                currentIndex++;
+                if (currentIndex < matrix.length) {
+                    loadQuestion();
+                } else {
+                    evaluateAndDisplayResults();
+                }
+            }
+        }
+
         function evaluateAndDisplayResults() {
             setScreen('results', 'SYS_COMPLETE');
             document.getElementById('quiz-progress').style.width = '100%';
+
+            // Pick the appropriate database based on path selection
+            const database = selectedComponent === 'reserve' ? mosMappingReserve : mosMappingActive;
+            document.getElementById('results-component-title').innerText = selectedComponent === 'reserve' ? "Your Reserve Component Profile" : "Your Active Duty Core Profile";
+
+            // Process score metrics from survey map
+            let scores = { CA: 0, TI: 0, LM: 0, AM: 0 };
+            userAnswers.forEach(ans => {
+                if (ans) {
+                    const weight = ans.isTieBreaker ? 2 : 1;
+                    scores[ans.cat] += weight;
+                }
+            });
 
             const grandTotal = scores.CA + scores.TI + scores.LM + scores.AM;
             
@@ -745,7 +913,7 @@
             const sortedBranches = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
             const primaryBranch = sortedBranches[0];
 
-            const recommendations = mosMapping[primaryBranch];
+            const recommendations = database[primaryBranch];
             const listContainer = document.getElementById('mos-recommendation-list');
             listContainer.innerHTML = '';
 
@@ -762,7 +930,8 @@
 
         function retakeAssessment() {
             currentIndex = 0;
-            scores = { CA: 0, TI: 0, LM: 0, AM: 0 };
+            selectedComponent = null;
+            userAnswers = [];
             document.getElementById('quiz-progress').style.width = '0%';
             setScreen('welcome', 'SYS_READY');
         }

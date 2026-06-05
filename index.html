@@ -1,0 +1,720 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIND YOUR MOS // TACTICAL DECISION ASSESSMENT</title>
+    <style>
+        :root {
+            --bg-primary: #0d0f12;
+            --bg-surface: #14181f;
+            --bg-surface-hover: #1c222b;
+            --army-gold: #ffc107;
+            --army-gold-dim: #b88b00;
+            --text-primary: #ffffff;
+            --text-secondary: #94a3b8;
+            --border-color: #2e3745;
+            --hud-glow: rgba(255, 193, 7, 0.15);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: "";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            z-index: 10;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        .hud-container {
+            width: 100%;
+            max-width: 680px;
+            background-color: var(--bg-surface);
+            border: 2px solid var(--border-color);
+            position: relative;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0,0,0,0.5);
+        }
+
+        .hud-container::before, .hud-container::after {
+            content: "";
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: var(--army-gold);
+            border-style: solid;
+            pointer-events: none;
+        }
+        .hud-container::before { top: -2px; left: -2px; border-width: 3px 0 0 3px; }
+        .hud-container::after { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; }
+
+        .hud-header {
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .hud-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            color: var(--army-gold);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .hud-status {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .welcome-text {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .warning-box {
+            border-left: 3px solid var(--army-gold);
+            background: rgba(255, 193, 7, 0.05);
+            padding: 15px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+        }
+
+        .progress-container {
+            width: 100%;
+            height: 6px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            margin-bottom: 25px;
+            position: relative;
+        }
+
+        .progress-bar {
+            height: 100%;
+            width: 0%;
+            background-color: var(--army-gold);
+            transition: width 0.3s ease;
+            box-shadow: 0 0 8px var(--army-gold);
+        }
+
+        .question-text {
+            font-size: 1.05rem;
+            line-height: 1.5;
+            margin-bottom: 25px;
+            font-weight: bold;
+            color: var(--text-primary);
+        }
+
+        .options-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option-card {
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            padding: 18px;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+            width: 100%;
+        }
+
+        .option-card:hover {
+            border-color: var(--army-gold);
+            background-color: var(--bg-surface-hover);
+            box-shadow: 0 0 10px var(--hud-glow);
+        }
+
+        .option-index {
+            color: var(--army-gold);
+            font-weight: bold;
+        }
+
+        .option-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .option-card:hover .option-text {
+            color: var(--text-primary);
+        }
+
+        .btn {
+            background-color: transparent;
+            border: 1px solid var(--army-gold);
+            color: var(--army-gold);
+            padding: 12px 24px;
+            cursor: pointer;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            font-size: 0.9rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn:hover {
+            background-color: var(--army-gold);
+            color: var(--bg-primary);
+            box-shadow: 0 0 15px var(--army-gold);
+        }
+
+        .results-summary {
+            margin-bottom: 25px;
+        }
+
+        .branch-score-row {
+            margin-bottom: 15px;
+        }
+
+        .branch-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .branch-bar-bg {
+            width: 100%;
+            height: 10px;
+            background-color: var(--bg-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .branch-bar-fill {
+            height: 100%;
+            background-color: var(--army-gold);
+            width: 0%;
+            transition: width 0.6s cubic-bezier(0.1, 1, 0.1, 1);
+        }
+
+        .mos-output-box {
+            border: 1px solid var(--border-color);
+            background: rgba(20, 24, 31, 0.8);
+            margin-top: 25px;
+            padding: 20px;
+        }
+
+        .mos-output-title {
+            color: var(--army-gold);
+            font-size: 1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            border-bottom: 1px dashed var(--border-color);
+            padding-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .mos-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .mos-item {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+
+        .mos-code {
+            color: var(--army-gold);
+            font-weight: bold;
+            min-width: 75px;
+        }
+
+        .mos-desc {
+            color: var(--text-secondary);
+        }
+
+        .results-actions {
+            margin-top: 30px;
+            border-top: 1px dashed var(--border-color);
+            padding-top: 20px;
+            text-align: right;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="hud-container">
+        <div class="hud-header">
+            <div class="hud-title">
+                <span>[⚡]</span> ARMY_MOS_ALIGNMENT_SYS_v3.0
+            </div>
+            <div class="hud-status" id="hud-status-node">SYS_READY</div>
+        </div>
+
+        <!-- 1. Welcome Screen -->
+        <div id="screen-welcome" class="screen active">
+            <p class="welcome-text">
+                Welcome to the Comprehensive Career Alignment Assessment. This upgraded 25-question matrix analyzes your natural problem-solving habits, daily preferences, and school interests to map your profile directly across the complete spectrum of U.S. Army technical and operational careers.
+            </p>
+            <div class="warning-box">
+                [NOTICE]: Every active Army MOS is accounted for in this assessment. Your patterns route directly into specialized fields including Combat, Cybersecurity, Aviation, Logistics, Healthcare, Support Operations, and Administration.
+            </div>
+            <button class="btn" onclick="startAssessment()">START QUIZ</button>
+        </div>
+
+        <!-- 2. Quiz Assessment Screen -->
+        <div id="screen-quiz" class="screen">
+            <div class="progress-container">
+                <div id="quiz-progress" class="progress-bar"></div>
+            </div>
+            <div id="question-text-field" class="question-text">Loading parameters...</div>
+            <div id="options-container" class="options-stack"></div>
+        </div>
+
+        <!-- 3. Results Screen -->
+        <div id="screen-results" class="screen">
+            <div class="results-summary">
+                <div class="mos-output-title" style="border-bottom: none; margin-bottom: 5px; font-size: 1.1rem;">Your Strengths Profile</div>
+                <p class="welcome-text" style="margin-bottom: 20px; font-size: 0.85rem;">Your decisions show clear alignments within the following military occupational fields:</p>
+                
+                <div class="branch-score-row">
+                    <div class="branch-info"><span>Combat Arms & Field Ops (CA)</span><span id="score-CA-val">0%</span></div>
+                    <div class="branch-bar-bg"><div id="bar-CA" class="branch-bar-fill"></div></div>
+                </div>
+                <div class="branch-score-row">
+                    <div class="branch-info"><span>Tech, Cyber & Intel (TI)</span><span id="score-TI-val">0%</span></div>
+                    <div class="branch-bar-bg"><div id="bar-TI" class="branch-bar-fill"></div></div>
+                </div>
+                <div class="branch-score-row">
+                    <div class="branch-info"><span>Logistics, Mech & Aviation (LM)</span><span id="score-LM-val">0%</span></div>
+                    <div class="branch-bar-bg"><div id="bar-LM" class="branch-bar-fill"></div></div>
+                </div>
+                <div class="branch-score-row">
+                    <div class="branch-info"><span>Admin, Healthcare & Support (AM)</span><span id="score-AM-val">0%</span></div>
+                    <div class="branch-bar-bg"><div id="bar-AM" class="branch-bar-fill"></div></div>
+                </div>
+            </div>
+
+            <div class="mos-output-box">
+                <div class="mos-output-title">Your Top Recommended Army Job Tracks</div>
+                <ul class="mos-list" id="mos-recommendation-list"></ul>
+            </div>
+
+            <div class="results-actions">
+                <button class="btn" onclick="retakeAssessment()">RETAKE ASSESSMENT</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Expanded 25-Question High School Framework Covering All MOS Paths
+        const matrix = [
+            {
+                text: "1. A piece of gear, device, or equipment you need for a school project or part-time job suddenly breaks. What do you want to do first?",
+                options: [
+                    { text: "Take it apart, look at the physical gears or wiring, and try to fix it myself.", cat: "LM" },
+                    { text: "Look up error codes online, run a digital check, or see if it's a software glitch.", cat: "TI" },
+                    { text: "Find a quick workaround or use a different tool so we can finish the job right now.", cat: "CA" },
+                    { text: "Check the warranty, find the receipt, or contact the manager to get an official replacement.", cat: "AM" }
+                ]
+            },
+            {
+                text: "2. When looking at future career fields or college majors, which environment sounds most exciting?",
+                options: [
+                    { text: "Working outdoors in challenging terrain where I am constantly moving around.", cat: "CA" },
+                    { text: "A modern, high-tech computer lab or a clean corporate office handling data.", cat: "TI" },
+                    { text: "A busy workshop, garage, or warehouse floor where I'm building or fixing real things.", cat: "LM" },
+                    { text: "A hospital, local clinic, or human resources office working closely with people.", cat: "AM" }
+                ]
+            },
+            {
+                text: "3. If you could instantly master one useful real-world skill, which would you pick?",
+                options: [
+                    { text: "Knowing exactly how to repair heavy vehicle engines, machinery, or complex mechanical systems.", cat: "LM" },
+                    { text: "Being able to scan large amounts of digital data and find hidden security threats.", cat: "TI" },
+                    { text: "The physical stamina and mental toughness to handle dangerous, fast-moving situations calmly.", cat: "CA" },
+                    { text: "Knowing how to quickly treat bad injuries, manage a medical crisis, or lead a team through a panic.", cat: "AM" }
+                ]
+            },
+            {
+                text: "4. Your class is planning a massive outdoor event, club trip, or sports competition. What job do you naturally grab?",
+                options: [
+                    { text: "Setting up the Wi-Fi network, managing the digital sign-ups, and handling communications.", cat: "TI" },
+                    { text: "Mapping out the field layout, setting up physical boundaries, and organizing crowd security.", cat: "CA" },
+                    { text: "Coordinating the gear drops, managing truck deliveries, and tracking the food and supply inventory.", cat: "LM" },
+                    { text: "Setting up the first-aid tent, greeting people at check-in, and managing team schedules.", cat: "AM" }
+                ]
+            },
+            {
+                text: "5. What is your primary goal for your career after high school or graduation? [PRIORITY DRIVER]",
+                options: [
+                    { text: "Landing a high-paying job in cybersecurity, software engineering, or tech intelligence.", cat: "TI" },
+                    { text: "Going into healthcare, nursing, law enforcement, or business management.", cat: "AM" },
+                    { text: "Building elite leadership habits, mental discipline, and extreme physical teamwork skills.", cat: "CA" },
+                    { text: "Starting a business in auto mechanics, building fabrication, aerospace tech, or global shipping.", cat: "LM" }
+                ],
+                isTieBreaker: true
+            },
+            {
+                text: "6. You are handed a huge, complicated textbook or manual for a new class. How do you study it?",
+                options: [
+                    { text: "I skip to the pictures, blueprints, diagrams, and mechanical breakdowns.", cat: "LM" },
+                    { text: "I look for patterns, cross-reference statistics, and try to find the main hidden takeaway.", cat: "TI" },
+                    { text: "I skip the reading completely and just want to start practicing the steps hands-on.", cat: "CA" },
+                    { text: "I organize the information into neat folders, checklists, and guides to share with a study group.", cat: "AM" }
+                ]
+            },
+            {
+                text: "7. Imagine a chaotic, loud, and fast-moving situation happens around you. How do you respond?",
+                options: [
+                    { text: "I rely on fast reflexes, physical energy, and jump into direct action immediately.", cat: "CA" },
+                    { text: "I slow down, look at the facts logically, and try to solve the puzzle behind the problem.", cat: "TI" },
+                    { text: "I focus on the tools around me—finding what gear or equipment we can use safely.", cat: "LM" },
+                    { text: "I stay calm, keep the people around me from panicking, and tell others exactly what to do.", cat: "AM" }
+                ]
+            },
+            {
+                text: "8. What kind of day makes you feel the most satisfied when you head home?",
+                options: [
+                    { text: "A day of hard physical teamwork where my leadership directly protected my squad or won the challenge.", cat: "CA" },
+                    { text: "A day spent troubleshooting a broken engine or building a piece of hardware that now works perfectly.", cat: "LM" },
+                    { text: "A day spent cracking a tough code, solving a math puzzle, or analyzing complex information.", cat: "TI" },
+                    { text: "A day where my specific skills saved someone from a medical, legal, or personal crisis.", cat: "AM" }
+                ]
+            },
+            {
+                text: "9. If your teachers, coaches, or best friends described your single best trait, what would they say?",
+                options: [
+                    { text: "You are incredibly reliable, tough, and never quit when things get physically hard.", cat: "CA" },
+                    { text: "You are a tech wizard who loves solving abstract puzzles or computer problems.", cat: "TI" },
+                    { text: "You are great with your hands, tools, and figuring out how physical things operate.", cat: "LM" },
+                    { text: "You have great empathy, are highly organized, and know how to take care of people.", cat: "AM" }
+                ]
+            },
+            {
+                text: "10. You notice a major slowdown in how your team is getting an assignment or project done. How do you fix it? [PRIORITY DRIVER]",
+                options: [
+                    { text: "Change the team layout, cut out unnecessary rules, and make sure people are in the right roles.", cat: "AM" },
+                    { text: "Check the materials—figure out what supplies or tools are missing and go grab them.", cat: "LM" },
+                    { text: "Rally the team to put in extra hours and use pure hard work to push past the obstacle.", cat: "CA" },
+                    { text: "Find a new digital app, software shortcut, or automated tracking system to speed things up.", cat: "TI" }
+                ],
+                isTieBreaker: true
+            },
+            {
+                text: "11. If you had to pick one type of gear to master completely, which sounds coolest?",
+                options: [
+                    { text: "Tactical vehicles, specialized weapons platforms, or high-tech navigation gear.", cat: "CA" },
+                    { text: "Advanced network servers, encrypted databases, or powerful cybersecurity software.", cat: "TI" },
+                    { text: "Heavy diesel engines, aircraft parts, or massive hydraulic system equipment.", cat: "LM" },
+                    { text: "Advanced medical diagnostic tools, legal files, or personnel tracking databases.", cat: "AM" }
+                ]
+            },
+            {
+                text: "12. Your supervisor hands you a complex task but gives you absolutely zero instructions on how to do it. What do you do?",
+                options: [
+                    { text: "Scout out the workspace, grab a couple of teammates, and start testing options physically on the ground.", cat: "CA" },
+                    { text: "Build a checklist, organize everyone's roles, and plan out the steps before anyone moves.", cat: "AM" },
+                    { text: "Look at what tools, materials, and mechanical assets are available to work with first.", cat: "LM" },
+                    { text: "Research what people did in the past, search for online templates, and dig up data records.", cat: "TI" }
+                ]
+            },
+            {
+                text: "13. What do you look forward to doing most on your days off or during the weekend?",
+                options: [
+                    { text: "Going hiking, camping, playing paintball, or playing high-energy team sports outside.", cat: "CA" },
+                    { text: "PC gaming, coding, building computers, or playing complex strategy games.", cat: "TI" },
+                    { text: "Working on a car or bike, building furniture, or tinkering with broken gadgets.", cat: "LM" },
+                    { text: "Volunteering, helping friends organize an event, or practicing life-saving/first-aid skills.", cat: "AM" }
+                ]
+            },
+            {
+                text: "14. In a multi-player video game or a competitive team sport, what is your preferred role?",
+                options: [
+                    { text: "The front-line attacker—leading the charge, making aggressive plays, and dealing with threats head-on.", cat: "CA" },
+                    { text: "The tech/intel support—watching the map, tracking enemy stats, and hacking or scouting ahead.", cat: "TI" },
+                    { text: "The engineer or base builder—gathering resources, upgrading gear, and repairing vehicles/structures.", cat: "LM" },
+                    { text: "The healer or team captain—keeping people alive, boosting squad morale, and calling out the strategy.", cat: "AM" }
+                ]
+            },
+            {
+                text: "15. What kind of achievement makes you feel the most genuinely proud of yourself? [PRIORITY DRIVER]",
+                options: [
+                    { text: "Pushing past my physical limits to win a tough tournament or finish a brutal workout.", cat: "CA" },
+                    { text: "Discovering a clever trick or finding a hidden bug that solves a massive technical problem.", cat: "TI" },
+                    { text: "Taking something that was completely broken and getting it running like new with my own hands.", cat: "LM" },
+                    { text: "Helping two friends resolve a major fight, or helping someone through a painful time.", cat: "AM" }
+                ],
+                isTieBreaker: true
+            },
+            {
+                text: "16. You are working a part-time fast-food job during a massive dinner rush. Where do you want to stand?",
+                options: [
+                    { text: "Right at the main grill or prep line, moving fast under intense heat and pressure.", cat: "CA" },
+                    { text: "Managing the digital drive-thru screen or cash system to keep order entry perfectly optimized.", cat: "TI" },
+                    { text: "In the back room tracking inventory, restocking supplies, and fixing the ice machine if it jams.", cat: "LM" },
+                    { text: "At the front counter talking to customers, fixing order mistakes, and organizing team breaks.", cat: "AM" }
+                ]
+            },
+            {
+                text: "17. Which high school elective class did you find the most interesting or rewarding?",
+                options: [
+                    { text: "Physical Education (PE), weight training, or outdoor sports.", cat: "CA" },
+                    { text: "Computer science, coding, statistics, or advanced math.", cat: "TI" },
+                    { text: "Auto shop, woodworking, welding, or robotics fabrication.", cat: "LM" },
+                    { text: "Health science, psychology, anatomy, or student council.", cat: "AM" }
+                ]
+            },
+            {
+                text: "18. A package you ordered arrives with 50 different parts and a terrible instruction manual. How do you build it?",
+                options: [
+                    { text: "I ditch the manual and figure it out as I go by matching the physical pieces together.", cat: "CA" },
+                    { text: "I look up a video tutorial on YouTube, figure out why the manual is bad, and find shortcuts.", cat: "TI" },
+                    { text: "I lay out all the bolts, screws, and tools neatly by size before doing anything else.", cat: "LM" },
+                    { text: "I check the safety warnings, make a clean workspace, and ask a friend to help me build it.", cat: "AM" }
+                ]
+            },
+            {
+                text: "19. When playing an open-world RPG or strategy game, what is your go-to character style?",
+                options: [
+                    { text: "A heavy warrior or fighter who deals with obstacles directly in close combat.", cat: "CA" },
+                    { text: "A tactical rogue, sniper, or mage who uses long-distance info and stealth to win.", cat: "TI" },
+                    { text: "A crafter or mechanic who upgrades gear, modifies weapons, and builds outposts.", cat: "LM" },
+                    { text: "A medic or squad support character who heals injuries and keeps the team operating.", cat: "AM" }
+                ]
+            },
+            {
+                text: "20. You witness a minor fender-bender car accident on your neighborhood street. What do you do first?",
+                options: [
+                    { text: "Run out immediately to direct traffic around the cars and pull broken parts off the road.", cat: "CA" },
+                    { text: "Pull out my phone to precisely log the time, location, and note exactly what happened.", cat: "TI" },
+                    { text: "Grab a toolkit or safety kit from my trunk to see if the vehicles have fluid leaks or smoke.", cat: "LM" },
+                    { text: "Run to check the drivers for injuries, keep them calm, and call 911 clearly.", cat: "AM" }
+                ]
+            },
+            {
+                text: "21. You are running a budget for a school club or planning how to save up for a car. What's your style?",
+                options: [
+                    { text: "I love using spreadsheets, checking bank calculations, and tracking exactly where every cent goes.", cat: "AM" },
+                    { text: "I focus on getting things done with pure bargaining, trading gear, or using hard work instead of cash.", cat: "CA" },
+                    { text: "I look for digital coupon codes, banking apps, or smart automation to maximize my savings.", cat: "TI" },
+                    { text: "I plan exactly how much gas, parts, and transport costs will affect the total trip setup.", cat: "LM" }
+                ]
+            },
+            {
+                text: "22. If you were picked to run a school media page or write an article about a major game, what would you focus on?",
+                options: [
+                    { text: "Conducting interviews with the crowd, taking high-impact photos, and publishing clean media stories.", cat: "AM" },
+                    { text: "Analyzing complex team stats, reviewing video recordings, and identifying hidden strategic plays.", cat: "TI" },
+                    { text: "Reviewing the safety layouts, crowd management setups, or stadium perimeter security rules.", cat: "CA" },
+                    { text: "Reporting on the arena gear setups, equipment transportation, or specialized maintenance routines.", cat: "LM" }
+                ]
+            },
+            {
+                text: "23. When working on a physical hands-on task, which type of tool do you prefer to handle?",
+                options: [
+                    { text: "Heavy power tools, diesel engine lifts, welding rigs, or cargo loading systems.", cat: "LM" },
+                    { text: "Precision digital diagnostic systems, network cable testers, or cryptographic software.", cat: "TI" },
+                    { text: "Emergency trauma kits, splints, legal database terminals, or personnel logging software.", cat: "AM" },
+                    { text: "High-power field gear, multi-tools, communications headsets, or navigation hardware.", cat: "CA" }
+                ]
+            },
+            {
+                text: "24. Your team is falling behind in a competitive tournament or deadline. What is your leadership approach?",
+                options: [
+                    { text: "Call an immediate huddle, yell out a clean motivation talk, and lead a high-energy charge forward.", cat: "CA" },
+                    { text: "Redistribute roles instantly based on stress levels, check for injuries or exhaustion, and keep rules tight.", cat: "AM" },
+                    { text: "Quickly analyze the opponent's strategy pattern, find a tactical weakness, and adapt our layout.", cat: "TI" },
+                    { text: "Check our operational assets—ensure our equipment is functioning perfectly and streamline the workflow.", cat: "LM" }
+                ]
+            },
+            {
+                text: "25. Which of these professional career paths sounds the most rewarding for your long-term future? [PRIORITY DRIVER]",
+                options: [
+                    { text: "Protecting lives directly in public safety, high-stakes defense, or specialized security ops.", cat: "CA" },
+                    { text: "Engineering complex aerospace platforms, heavy mechanical logistics, or technical manufacturing.", cat: "LM" },
+                    { text: "Mastering advanced cybersecurity frameworks, high-level data networks, or intelligence processing.", cat: "TI" },
+                    { text: "Serving a community in advanced trauma medicine, corporate legal defense, or finance management.", cat: "AM" }
+                ],
+                isTieBreaker: true
+            }
+        ];
+
+        // Expansive Complete-Spectrum Army MOS Database Mapped to Primary Architectural Archetypes
+        const mosMapping = {
+            "CA": [
+                { code: "11B", title: "Infantryman", desc: "The foundational ground force; conducts direct tactical maneuvers, security missions, and front-line combat operations." },
+                { code: "12B", title: "Combat Engineer", desc: "Constructs defensive positions, deploys demolition systems, and clears physical obstacles under high-stakes conditions." },
+                { code: "13F", title: "Fire Support Specialist", desc: "Coordinates intelligence and field data to plan, track, and execute precise long-range artillery and strike operations." },
+                { code: "19K", title: "M1 Armor Crewman", desc: "Operates and commands heavy armor assets and precision mobile weapons platforms like the M1 Abrams tank." }
+            ],
+            "TI": [
+                { code: "17C", title: "Cyber Operations Specialist", desc: "Defends critical defense information networks and executes advanced cryptographic, cyber defensive, and intelligence maneuvers." },
+                { code: "35F", title: "Intelligence Analyst", desc: "Evaluates raw satellite, radar, and signal data streams to build comprehensive strategic enemy maps and operational briefs." },
+                { code: "25B", title: "Information Technology Specialist", desc: "Builds, configures, and safeguards tactical server infrastructures, field communication networks, and tactical computing arrays." },
+                { code: "35N", title: "Signals Intelligence Analyst", desc: "Intercepts and decodes foreign electronic communications data to extract actionable tactical warning profiles." }
+            ],
+            "LM": [
+                { code: "91B", title: "Wheeled Vehicle Mechanic", desc: "Diagnoses, services, and completely overhauls engine, electrical, and fuel components on heavy tactical transport systems." },
+                { code: "15T", title: "UH-60 Helicopter Repairer", desc: "Maintains critical structure airframes, blades, subsystems, and specialized propulsion mechanics on Black Hawk systems." },
+                { code: "88M", title: "Motor Transport Operator", desc: "Commands heavy cargo transport platforms, organizing strategic multi-vehicle supply lines across diverse terrains." },
+                { code: "92Y", title: "Unit Supply Specialist", desc: "Manages logistical distribution channels, warehouse inventory arrays, and coordinates weapon and asset asset deliveries." }
+            ],
+            "AM": [
+                { code: "68W", title: "Combat Medic Specialist", desc: "Delivers immediate emergency trauma care, field battlefield life-support interventions, and base facility healthcare services." },
+                { code: "31B", title: "Military Police", desc: "Enforces military law, carries out anti-terrorism security patrols, manages area policing, and executes tactical traffic control." },
+                { code: "42A", title: "Human Resources Specialist", desc: "Manages personnel administrative records, unit tracking networks, legal readiness profiles, and career service data." },
+                { code: "27D", title: "Paralegal Specialist", desc: "Processes vital legal tracking documentation, manages court evidence, and provides expert legal support in military law." }
+            ]
+        };
+
+        let currentIndex = 0;
+        let scores = { CA: 0, TI: 0, LM: 0, AM: 0 };
+
+        function setScreen(screenId, statusText) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(`screen-${screenId}`).classList.add('active');
+            document.getElementById('hud-status-node').innerText = statusText;
+        }
+
+        function startAssessment() {
+            currentIndex = 0;
+            scores = { CA: 0, TI: 0, LM: 0, AM: 0 };
+            setScreen('quiz', 'SYS_EVALUATING');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            const progressPercent = (currentIndex / matrix.length) * 100;
+            document.getElementById('quiz-progress').style.width = `${progressPercent}%`;
+
+            const currentQ = matrix[currentIndex];
+            document.getElementById('question-text-field').innerText = currentQ.text;
+
+            const container = document.getElementById('options-container');
+            container.innerHTML = '';
+
+            currentQ.options.forEach((opt, index) => {
+                const prefix = String.fromCharCode(65 + index);
+                const card = document.createElement('button');
+                card.className = 'option-card';
+                card.onclick = () => selectOption(opt.cat, currentQ.isTieBreaker);
+
+                card.innerHTML = `
+                    <span class="option-index">[${prefix}]</span>
+                    <span class="option-text">${opt.text}</span>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function selectOption(category, isTieBreaker) {
+            const weight = isTieBreaker ? 2 : 1;
+            scores[category] += weight;
+
+            currentIndex++;
+            if (currentIndex < matrix.length) {
+                loadQuestion();
+            } else {
+                evaluateAndDisplayResults();
+            }
+        }
+
+        function evaluateAndDisplayResults() {
+            setScreen('results', 'SYS_COMPLETE');
+            document.getElementById('quiz-progress').style.width = '100%';
+
+            const grandTotal = scores.CA + scores.TI + scores.LM + scores.AM;
+            
+            const pctCA = Math.round((scores.CA / grandTotal) * 100);
+            const pctTI = Math.round((scores.TI / grandTotal) * 100);
+            const pctLM = Math.round((scores.LM / grandTotal) * 100);
+            const pctAM = Math.round((scores.AM / grandTotal) * 100);
+
+            document.getElementById('score-CA-val').innerText = `${pctCA}%`;
+            document.getElementById('bar-CA').style.width = `${pctCA}%`;
+
+            document.getElementById('score-TI-val').innerText = `${pctTI}%`;
+            document.getElementById('bar-TI').style.width = `${pctTI}%`;
+
+            document.getElementById('score-LM-val').innerText = `${pctLM}%`;
+            document.getElementById('bar-LM').style.width = `${pctLM}%`;
+
+            document.getElementById('score-AM-val').innerText = `${pctAM}%`;
+            document.getElementById('bar-AM').style.width = `${pctAM}%`;
+
+            const sortedBranches = Object.keys(scores).sort((a, b) => scores[b] - scores[a]);
+            const primaryBranch = sortedBranches[0];
+
+            const recommendations = mosMapping[primaryBranch];
+            const listContainer = document.getElementById('mos-recommendation-list');
+            listContainer.innerHTML = '';
+
+            recommendations.forEach(mos => {
+                const li = document.createElement('li');
+                li.className = 'mos-item';
+                li.innerHTML = `
+                    <span class="mos-code">MOS ${mos.code}</span>
+                    <span class="mos-desc"><strong>${mos.title}:</strong> ${mos.desc}</span>
+                `;
+                listContainer.appendChild(li);
+            });
+        }
+
+        function retakeAssessment() {
+            currentIndex = 0;
+            scores = { CA: 0, TI: 0, LM: 0, AM: 0 };
+            document.getElementById('quiz-progress').style.width = '0%';
+            setScreen('welcome', 'SYS_READY');
+        }
+    </script>
+</body>
+</html>
